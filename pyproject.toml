@@ -1,0 +1,20 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+dynamic = ["version", "description"]
+name = "territory-python-scanner"
+authors = [
+  {name = "Pawel Stiasny", email="pawel@territory.dev"}
+]
+dependencies = [
+  "protobuf>=5.29.3",
+  "jedi",
+  "parso",
+  "pytest",
+]
+license = "MIT"
+
+[project.urls]
+Homepage = "https://territory.dev"
