@@ -18,3 +18,5 @@ license = "MIT"
 
 [project.urls]
 Homepage = "https://territory.dev"
+Repository = "https://github.com/territory-dev/territory-python-scanner"
+Issues = "https://discord.gg/34FmMARaKP"
