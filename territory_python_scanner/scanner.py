@@ -138,9 +138,11 @@ def write_tree(g: G, tree: NodeOrLeaf):
             g.path,
             start=loc_of(g.path, tree),
             nest_level=g.depth+1)
-        write_content(
-            replace(g, uim_node=node, depth=g.depth+1, omit_initial_prefix=True),
-            tree)
+        if is_decorated:
+            w = write_decorated
+        else:
+            w = write_content
+        w(replace(g, uim_node=node, depth=g.depth+1, omit_initial_prefix=True), tree)
         g.node_writer.write_node(node)
 
         point_to = tree
@@ -149,13 +151,10 @@ def write_tree(g: G, tree: NodeOrLeaf):
         if getattr(point_to, 'name', None):
             point_to = point_to.name
         if is_decorated:
-            write_elided_decorated_def(
-                replace(g, href=uni_href(g.path, point_to)),
-                tree)
+            we = write_elided_decorated_def
         else:
-            write_elided_def(
-                replace(g, href=uni_href(g.path, point_to)),
-                tree)
+            we = write_elided_def
+        we(replace(g, href=uni_href(g.path, point_to)), tree)
 
         if isinstance(point_to, TName):
             line, col = tree.start_pos
@@ -167,6 +166,13 @@ def write_tree(g: G, tree: NodeOrLeaf):
                 None)
     else:
         write_content(g, tree)
+
+
+def write_decorated(g: G, tree: NodeOrLeaf):
+    for c in tree.children:
+        write_content(g, c)
+        if g.omit_initial_prefix:
+            g = replace(g, omit_initial_prefix=False)
 
 
 def write_content(g: G, tree: NodeOrLeaf):
@@ -256,7 +262,7 @@ def scan_repo(repo_root, nodes_uim_path, search_uim_path, system=False):
             assert isinstance(code, str)
             _line_offsets[path] = scan_line_offsets(code)
 
-            file_node = uim_node_writer.begin_node('SourceFile', path)
+            file_node = uim_node_writer.begin_node('SourceFile', path, nest_level=0)
 
             g = G(
                 path=path,
@@ -264,7 +270,7 @@ def scan_repo(repo_root, nodes_uim_path, search_uim_path, system=False):
                 node_writer=uim_node_writer,
                 search_writer=search_writer,
                 uim_node=file_node,
-                depth=1,
+                depth=0,
                 omit_initial_prefix=False,
                 href=None,
                 scan_queue=scan_queue)
