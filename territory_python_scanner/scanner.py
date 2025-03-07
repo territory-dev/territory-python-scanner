@@ -221,7 +221,13 @@ def write_content(g: G, tree: NodeOrLeaf):
                         'path': str(p),
                         'offset': get_offset(p, name.line, name.column)
                     }
-        g.uim_node.append_token(tok_type(tree), tree.value, href, real_line=tree.line)
+        g.uim_node.append_token(
+            tok_type(tree),
+            tree.value,
+            href,
+            real_line=tree.line,
+            location=loc_of(g.path, tree)
+        )
     elif isinstance(tree, BaseNode):
         for c in tree.children:
             write_tree(g, c)

@@ -11,7 +11,14 @@ class UimTokenWriter:
         self.text_parts = []
         self.offset = 0
 
-    def append_token(self, token_type: str, text: str, href: Any, real_line: Optional[int] = None) -> None:
+    def append_token(
+        self,
+        token_type: str,
+        text: str,
+        href: Any,
+        real_line: Optional[int] = None,
+        location: Optional[Location] = None,
+    ) -> None:
         """
         Append a token to the current node.
 
@@ -47,6 +54,8 @@ class UimTokenWriter:
         # Set real_line if it differs from calculated_line
         if real_line is not None and self.calculated_line != real_line:
             tok.real_line = real_line
+        if location is not None:
+            tok.uim_location.CopyFrom(location)
 
         text_bytes = text.encode('utf-8')
         tok.offset = self.offset
