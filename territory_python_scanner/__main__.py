@@ -14,4 +14,5 @@ args.uim_dir.mkdir(exist_ok=True, parents=True)
 nodes_uim_path = str(args.uim_dir / 'nodes.uim')
 search_uim_path = str(args.uim_dir / 'search.uim')
 
+print(f'writing output to {args.uim_dir}')
 scan_repo(repo_root, nodes_uim_path, search_uim_path, system=args.system)

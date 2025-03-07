@@ -127,29 +127,39 @@ class G:
     depth: int
     omit_initial_prefix: bool
     href: dict | None
+    member_of: str | None
     scan_queue: ScanQueue
 
 
 def write_tree(g: G, tree: NodeOrLeaf):
     is_decorated = (isinstance(tree, PythonNode) and tree.type == 'decorated')
     if isinstance(tree, ClassOrFunc) or is_decorated:
-        node = g.node_writer.begin_node(
-            'Definition',
-            g.path,
-            start=loc_of(g.path, tree),
-            nest_level=g.depth+1)
-        if is_decorated:
-            w = write_decorated
-        else:
-            w = write_content
-        w(replace(g, uim_node=node, depth=g.depth+1, omit_initial_prefix=True), tree)
-        g.node_writer.write_node(node)
-
         point_to = tree
         while (isinstance(point_to, PythonNode) and point_to.type == 'decorated'):
             point_to = point_to.children[-1]
         if getattr(point_to, 'name', None):
             point_to = point_to.name
+
+        node = g.node_writer.begin_node(
+            'Definition',
+            g.path,
+            start=loc_of(g.path, tree),
+            nest_level=g.depth+1,
+            member_of=g.member_of)
+        if is_decorated:
+            w = write_decorated
+        else:
+            w = write_content
+        w(
+            replace(
+                g,
+                uim_node=node,
+                depth=g.depth+1,
+                omit_initial_prefix=True,
+                member_of=point_to.value),
+            tree)
+        g.node_writer.write_node(node)
+
         if is_decorated:
             we = write_elided_decorated_def
         else:
@@ -273,6 +283,7 @@ def scan_repo(repo_root, nodes_uim_path, search_uim_path, system=False):
                 depth=0,
                 omit_initial_prefix=False,
                 href=None,
+                member_of=None,
                 scan_queue=scan_queue)
 
             setup_timeout(120)

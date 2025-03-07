@@ -84,7 +84,14 @@ class UimNodeWriter:
             if not value:
                 break
 
-    def begin_node(self, kind: str, path: str, start: Optional[Location] = None, nest_level: Optional[int] = 1) -> UimTokenWriter:
+    def begin_node(
+        self,
+        kind: str,
+        path: str,
+        start: Optional[Location] = None,
+        nest_level: Optional[int] = 1,
+        member_of: Optional[str] = None,
+    ) -> UimTokenWriter:
         """
         Begin a new node with the specified kind and path.
 
@@ -92,6 +99,7 @@ class UimNodeWriter:
             kind: The node kind (must match a NodeKind enum name)
             path: The node path
             start: Optional location information
+            nest_level: Nesting level of the node.  Greater than 1 if code is a part of a larger structure.
 
         Returns:
             A UimTokenWriter for the new node
@@ -110,6 +118,8 @@ class UimNodeWriter:
 
         # Set the path
         node.path = path
+        if member_of:
+            node.member_of = member_of
         node.uim_nest_level = nest_level
 
         # Set the start location if provided
