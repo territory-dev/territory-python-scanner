@@ -49,7 +49,7 @@ def scan_line_offsets(code):
 def get_offset(path: str, line, col):
     try:
         if path not in _line_offsets:
-            with open(path) as f:
+            with open(path, 'rb') as f:
                 _line_offsets[path] = scan_line_offsets(f.read())
         return _line_offsets[path][line-1] + col
     except Exception as e:
@@ -156,7 +156,7 @@ def write_tree(g: G, tree: NodeOrLeaf):
                 uim_node=node,
                 depth=g.depth+1,
                 omit_initial_prefix=True,
-                member_of=point_to.value),
+                member_of=getattr(point_to, 'value', None)),
             tree)
         g.node_writer.write_node(node)
 
@@ -296,7 +296,7 @@ def scan_repo(repo_root, nodes_uim_path, search_uim_path, system=False):
             try:
                 for df in module_node.children:
                     write_tree(g, df)
-            except TimeoutError:
+            except Exception:
                 print_exc()
             finally:
                 clear_timeout()
