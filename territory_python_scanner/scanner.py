@@ -26,9 +26,9 @@ _path_expansions = {}
 _line_offsets = {}
 
 
-def write_ws_and_comments(uim_node: UimTokenWriter, prefix: str, href: dict, real_line: int):
+def write_ws_and_comments(uim_node: UimTokenWriter, prefix: str, href: dict, real_line: int, elided: bool):
     # TODO
-    uim_node.append_token('WS', prefix, href, real_line=real_line)
+    uim_node.append_token('WS', prefix, href, real_line=real_line, elided=elided)
 
 
 def expand_path(p: Path):
@@ -129,6 +129,8 @@ class G:
     href: dict | None
     member_of: str | None
     scan_queue: ScanQueue
+    elided: bool
+    reference_context: str | None
 
 
 def write_tree(g: G, tree: NodeOrLeaf):
@@ -140,12 +142,21 @@ def write_tree(g: G, tree: NodeOrLeaf):
         if getattr(point_to, 'name', None):
             point_to = point_to.name
 
+        name = getattr(point_to, 'value', None)
+        reference_context = g.reference_context
+        if name:
+            if reference_context:
+                reference_context += '.' +  name
+            else:
+                reference_context = name
+
         node = g.node_writer.begin_node(
             'Definition',
             g.path,
             start=loc_of(g.path, tree),
             nest_level=g.depth+1,
-            member_of=g.member_of)
+            member_of=g.member_of,
+            reference_context=reference_context)
         if is_decorated:
             w = write_decorated
         else:
@@ -156,7 +167,9 @@ def write_tree(g: G, tree: NodeOrLeaf):
                 uim_node=node,
                 depth=g.depth+1,
                 omit_initial_prefix=True,
-                member_of=getattr(point_to, 'value', None)),
+                member_of=name,
+                reference_context=reference_context,
+            ),
             tree)
         g.node_writer.write_node(node)
 
@@ -192,7 +205,7 @@ def write_content(g: G, tree: NodeOrLeaf):
     if pf := getattr(tree, 'prefix', None):
         if not g.omit_initial_prefix:
             pline, _ = tree.get_start_pos_of_prefix()
-            write_ws_and_comments(g.uim_node, pf, g.href, pline)
+            write_ws_and_comments(g.uim_node, pf, g.href, pline, g.elided)
         g = replace(g, omit_initial_prefix=False)
     if isinstance(tree, Leaf):
         href = g.href
@@ -226,7 +239,8 @@ def write_content(g: G, tree: NodeOrLeaf):
             tree.value,
             href,
             real_line=tree.line,
-            location=loc_of(g.path, tree)
+            location=loc_of(g.path, tree),
+            elided=g.elided,
         )
     elif isinstance(tree, BaseNode):
         for c in tree.children:
@@ -238,10 +252,11 @@ def write_content(g: G, tree: NodeOrLeaf):
 
 
 def write_elided_def(g: G, df: ClassOrFunc):
+    g = replace(g, elided=True)
     for c in df.children:
         write_content(g, c)
         if isinstance(c, Operator) and c.value == ':':
-            g.uim_node.append_token('WS', ' …', g.href)
+            g.uim_node.append_token('WS', ' …', g.href, elided=True)
             break
 
 
@@ -290,7 +305,9 @@ def scan_repo(repo_root, nodes_uim_path, search_uim_path, system=False):
                 omit_initial_prefix=False,
                 href=None,
                 member_of=None,
-                scan_queue=scan_queue)
+                scan_queue=scan_queue,
+                elided=False,
+                reference_context=None)
 
             setup_timeout(120)
             try:

@@ -18,6 +18,7 @@ class UimTokenWriter:
         href: Any,
         real_line: Optional[int] = None,
         location: Optional[Location] = None,
+        elided: bool = False,
     ) -> None:
         """
         Append a token to the current node.
@@ -56,6 +57,7 @@ class UimTokenWriter:
             tok.real_line = real_line
         if location is not None:
             tok.uim_location.CopyFrom(location)
+        tok.uim_elided = elided
 
         text_bytes = text.encode('utf-8')
         tok.offset = self.offset
@@ -100,6 +102,7 @@ class UimNodeWriter:
         start: Optional[Location] = None,
         nest_level: Optional[int] = 1,
         member_of: Optional[str] = None,
+        reference_context: Optional[str] = None,
     ) -> UimTokenWriter:
         """
         Begin a new node with the specified kind and path.
@@ -129,6 +132,8 @@ class UimNodeWriter:
         node.path = path
         if member_of:
             node.member_of = member_of
+        if reference_context:
+            node.uim_reference_context = reference_context
         node.uim_nest_level = nest_level
 
         # Set the start location if provided
