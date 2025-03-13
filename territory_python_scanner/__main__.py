@@ -7,6 +7,7 @@ arg_parser = ArgumentParser()
 arg_parser.add_argument('repo_root', type=Path)
 arg_parser.add_argument('uim_dir', type=Path)
 arg_parser.add_argument('--system', action='store_true')
+arg_parser.add_argument('-v', action='store_true')
 args = arg_parser.parse_args()
 
 repo_root: Path = args.repo_root
@@ -15,4 +16,9 @@ nodes_uim_path = str(args.uim_dir / 'nodes.uim')
 search_uim_path = str(args.uim_dir / 'search.uim')
 
 print(f'writing output to {args.uim_dir}')
-scan_repo(repo_root, nodes_uim_path, search_uim_path, system=args.system)
+scan_repo(
+    repo_root,
+    nodes_uim_path,
+    search_uim_path,
+    system=args.system,
+    verbose=args.v)

@@ -131,6 +131,7 @@ class G:
     scan_queue: ScanQueue
     elided: bool
     reference_context: str | None
+    verbose: bool
 
 
 def write_tree(g: G, tree: NodeOrLeaf):
@@ -225,15 +226,18 @@ def write_content(g: G, tree: NodeOrLeaf):
             if locs:
                 name: Name = locs[0]
                 if name.line is None or name.column is None or name.module_path is None:
-                    if name.module_name != 'builtins':
+                    if g.verbose and name.module_name != 'builtins':
                         print('no location for', name)
                 else:
                     p = expand_path(name.module_path)
                     g.scan_queue.add_imported(p)
-                    href = {
-                        'path': str(p),
-                        'offset': get_offset(p, name.line, name.column)
-                    }
+                    try:
+                        href = {
+                            'path': str(p),
+                            'offset': get_offset(p, name.line, name.column)
+                        }
+                    except KeyError as ke:
+                        print(f'{g.path}:{tree.line}:{tree.column} {name.full_name}: {ke}')
         g.uim_node.append_token(
             tok_type(tree),
             tree.value,
@@ -268,7 +272,7 @@ def write_elided_decorated_def(g: G, df: PythonNode):
         write_content(g, c)
 
 
-def scan_repo(repo_root, nodes_uim_path, search_uim_path, system=False):
+def scan_repo(repo_root, nodes_uim_path, search_uim_path, system=False, verbose=False):
     if not repo_root.exists():
         raise IOError(f'directory does not exist: {repo_root}')
     project = get_default_project(repo_root)
@@ -307,7 +311,8 @@ def scan_repo(repo_root, nodes_uim_path, search_uim_path, system=False):
                 member_of=None,
                 scan_queue=scan_queue,
                 elided=False,
-                reference_context=None)
+                reference_context=None,
+                verbose=verbose)
 
             setup_timeout(120)
             try:
